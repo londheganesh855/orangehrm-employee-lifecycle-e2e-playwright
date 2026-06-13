@@ -1,0 +1,45 @@
+import { defineConfig, devices } from '@playwright/test';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+
+/**
+ * Load environment variables
+ */
+dotenv.config({
+  path: path.resolve(__dirname, '.env.playwright')
+});
+
+export default defineConfig({
+  testDir: './tests',
+
+  fullyParallel: true,
+
+  forbidOnly: !!process.env.CI,
+
+  retries: process.env.CI ? 2 : 0,
+
+  workers: process.env.CI ? 1 : undefined,
+
+  reporter: [
+    ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['./html-reporter.ts'],
+  ],
+
+  use: {
+    baseURL: process.env.BaseURL,
+
+    trace: 'retain-on-failure',
+    video: 'on',
+    screenshot: 'only-on-failure',
+    headless: false,
+    viewport: null,
+  },
+
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+});

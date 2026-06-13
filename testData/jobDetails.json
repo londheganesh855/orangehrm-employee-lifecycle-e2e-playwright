@@ -1,0 +1,10 @@
+{
+  "newEmployment": {
+    "jobTitle": "Account Assistant",
+    "empStatus": "Freelance"
+  },
+  "updatedEmployment": {
+    "updatedJobTitle": "Automaton Tester",
+    "updatedEmpStatus": "Full-Time Permanent"
+  }
+}
