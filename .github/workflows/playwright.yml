@@ -31,11 +31,11 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      # 🔥 DEBUG STEP (temporary - remove later if you want)
-      - name: Debug environment variables
+      - name: Debug environment (safe)
         run: |
           echo "BASE_URL=$BASE_URL"
-          echo "LOGIN_USERNAME=$LOGIN_USERNAME"
+          echo "LoginUsername=$LoginUsername"
+          echo "LoginPassword is set: $([ -n \"$LoginPassword\" ] && echo YES || echo NO)"
 
       - name: Run tests
         run: npx playwright test
