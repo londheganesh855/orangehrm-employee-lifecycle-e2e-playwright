@@ -31,15 +31,6 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      # 🔥 DEBUG ENV CHECK
-      - name: Debug environment variables
-        run: |
-          echo "===== ENV DEBUG START ====="
-          echo "BASE_URL=$BASE_URL"
-          echo "LoginUsername=$LoginUsername"
-          echo "LoginPassword is set: $([ -n \"$LoginPassword\" ] && echo YES || echo NO)"
-          echo "===== ENV DEBUG END ====="
-
       # 🔥 RUN TESTS WITH TRACE + DEBUG
       - name: Run Playwright tests (DEBUG MODE)
         run: npx playwright test --trace on --reporter=list
