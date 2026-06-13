@@ -13,34 +13,35 @@ test.describe('Employee Lifecycle - E2E', () => {
   test('creates, verifies, edits, validates via API, deletes and logs out', async ({ page }) => {
     test.setTimeout(120000);
 
-    
     const loginPage = new LoginPage(page);
     const pimPage = new PIMPage(page);
     const addEmployeePage = new AddEmployeePage(page);
     const employeeDetailsPage = new EmployeeDetailsPage(page);
     const loginHelper = new LoginHelper(page);
 
-    // Use test data but generate a unique employeeId to avoid collisions
     const uniqueEmployeeId = `E${Date.now().toString().slice(-6)}`;
     const firstName = employeeData.firstName;
     const lastName = employeeData.lastName;
     const middleName = employeeData.middleName;
 
-    logStep('Act I - Login to OrangeHRM');
+    logStep('ACT I - Open application and perform login');
     await page.goto('/');
     await loginHelper.login();
 
-    logStep('Assert I - Verify dashboard URL after login');
+    logStep('ASSERT I - Verify successful login (Dashboard URL validation)');
     await expect(page).toHaveURL(/dashboard/);
 
-    logStep('Act II - Create authenticated API context using browser cookies');
+    logStep('ACT II - Initialize authenticated API context using session cookies');
     const cookies = await page.context().cookies();
     const cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join('; ');
     const apiContext = await playwrightRequest.newContext({
       extraHTTPHeaders: { Cookie: cookieHeader, accept: 'application/json' }
     });
 
-    logStep('Act III - Navigate to Add Employee and fill details');
+    logStep('ASSERT II - Verify API context is successfully created');
+    expect(apiContext).toBeDefined();
+
+    logStep('ACT III - Navigate to Add Employee and enter employee details');
     await pimPage.clickPIM();
     await pimPage.clickAddEmployee();
 
@@ -50,25 +51,27 @@ test.describe('Employee Lifecycle - E2E', () => {
     await addEmployeePage.enterLastName(lastName);
     await addEmployeePage.enterEmployeeId(uniqueEmployeeId);
 
-    logStep('Assert III - Verify employee form fields are populated');
+    logStep('ASSERT III - Validate employee form data is correctly populated');
     await expect(await employeeDetailsPage.getFirstName()).toBe(firstName);
     await expect(await employeeDetailsPage.getMiddleName()).toBe(middleName);
     await expect(await employeeDetailsPage.getLastName()).toBe(lastName);
     await expect(await employeeDetailsPage.getEmployeeId()).toBe(uniqueEmployeeId);
 
-    logStep('Act IV - Check for existing employeeId through API before save');
+    logStep('ACT IV - Check and handle duplicate employee via API before creation');
     const employeesUrl = 'https://opensource-demo.orangehrmlive.com/web/index.php/api/v2/pim/employees';
     const preResp = await apiContext.get(employeesUrl);
     expect(preResp.status()).toBe(200);
     const preBody = await preResp.json();
     const existing = preBody.data.find((e: any) => e.employeeId === uniqueEmployeeId);
+
     if (existing) {
       const existingEmpNumber = existing.empNumber;
-      // Delete by empNumber via API
+
+      logStep('ACT IV - Delete existing duplicate employee via API');
       const delResp = await apiContext.delete(employeesUrl, { data: { ids: [existingEmpNumber] } });
       expect([200, 204].includes(delResp.status())).toBeTruthy();
 
-      // verify deletion
+      logStep('ASSERT IV - Verify duplicate employee removal via API');
       const verifyResp = await apiContext.get(employeesUrl);
       expect(verifyResp.status()).toBe(200);
       const verifyBody = await verifyResp.json();
@@ -76,14 +79,15 @@ test.describe('Employee Lifecycle - E2E', () => {
       expect(stillExists).toBeUndefined();
     }
 
+    logStep('ACT V - Save newly created employee');
     await addEmployeePage.clickSave();
 
-    logStep('Assert IV - Verify save success toast after employee creation');
+    logStep('ASSERT V - Verify employee creation success message');
     await expect(addEmployeePage.successToastMessage.first()).toBeVisible();
     const toast = await addEmployeePage.getToastMessage();
     expect(toast).toContain('Success');
 
-    logStep('Act V - Update job title and employment status for new employee');
+    logStep('ACT VI - Assign initial job details to employee');
     await employeeDetailsPage.clickJobTab();
     await employeeDetailsPage.clickJobTitleDropdown();
     await employeeDetailsPage.selectJobTitle(jobDetails.newEmployment.jobTitle);
@@ -91,17 +95,17 @@ test.describe('Employee Lifecycle - E2E', () => {
     await employeeDetailsPage.selectEmploymentStatus(jobDetails.newEmployment.empStatus);
     await employeeDetailsPage.clickSave();
 
-    logStep('Assert V - Confirm initial job details update');
+    logStep('ASSERT VI - Validate initial job details saved successfully');
     await expect(await employeeDetailsPage.getSelectedJobTitle()).toBe(jobDetails.newEmployment.jobTitle);
     await expect(await employeeDetailsPage.getSelectedEmploymentStatus()).toBe(jobDetails.newEmployment.empStatus);
 
-    logStep('Act VI - Search and edit the newly created employee');
+    logStep('ACT VII - Search and open employee record for update');
     await pimPage.clickPIM();
     await pimPage.searchEmployeeId(uniqueEmployeeId);
     await pimPage.clickSearch();
     await pimPage.clickEditEmployee(uniqueEmployeeId);
 
-    logStep('Act VII - Modify job details for the employee');
+    logStep('ACT VIII - Update employee job details');
     await employeeDetailsPage.clickJobTab();
     await employeeDetailsPage.clickJobTitleDropdown();
     await employeeDetailsPage.selectJobTitle(jobDetails.updatedEmployment.updatedJobTitle);
@@ -109,56 +113,57 @@ test.describe('Employee Lifecycle - E2E', () => {
     await employeeDetailsPage.selectEmploymentStatus(jobDetails.updatedEmployment.updatedEmpStatus);
     await employeeDetailsPage.clickSave();
 
-    logStep('Assert VII - Confirm updated job title and employment status');
+    logStep('ASSERT VIII - Verify updated job details in UI');
     await expect(await employeeDetailsPage.getSelectedJobTitle()).toBe(jobDetails.updatedEmployment.updatedJobTitle);
     await expect(await employeeDetailsPage.getSelectedEmploymentStatus()).toBe(jobDetails.updatedEmployment.updatedEmpStatus);
 
-    logStep('Act VIII - Validate employee details with API');
-    const employeesResp = await apiContext.get('https://opensource-demo.orangehrmlive.com/web/index.php/api/v2/pim/employees');
+    logStep('ACT IX - Validate employee data using API');
+    const employeesResp = await apiContext.get(employeesUrl);
     expect(employeesResp.status()).toBe(200);
     const employeesBody = await employeesResp.json();
 
     const found = employeesBody.data.find((e: any) => e.employeeId === uniqueEmployeeId);
     expect(found).toBeDefined();
+
+    const empNumber = found.empNumber;
+    const jobResp = await apiContext.get(
+      `https://opensource-demo.orangehrmlive.com/web/index.php/api/v2/pim/employees/${empNumber}/job-details`
+    );
+    expect(jobResp.status()).toBe(200);
+    const jobBody = await jobResp.json();
+
+    logStep('ASSERT IX - Verify API data matches UI updated values');
     expect(found.firstName).toBe(firstName);
     expect(found.lastName).toBe(lastName);
     expect(found.middleName).toBe(middleName);
-
-    logStep('Assert VIII - Verify API response contains created employee values');
-
-    const empNumber = found.empNumber;
-    const jobResp = await apiContext.get(`https://opensource-demo.orangehrmlive.com/web/index.php/api/v2/pim/employees/${empNumber}/job-details`);
-    expect(jobResp.status()).toBe(200);
-    const jobBody = await jobResp.json();
     expect(jobBody.data.jobTitle.title).toBe(jobDetails.updatedEmployment.updatedJobTitle);
     expect(jobBody.data.empStatus.name).toBe(jobDetails.updatedEmployment.updatedEmpStatus);
 
-    logStep('Assert VIII - Verify job details returned from API match UI edited values');
-
-    // Delete via UI
+    logStep('ACT X - Delete employee via UI');
     await pimPage.clickPIM();
     await pimPage.searchEmployeeId(uniqueEmployeeId);
     await pimPage.clickSearch();
     await pimPage.clickDeleteEmployee(uniqueEmployeeId);
     await pimPage.clickYesDelete();
 
-    logStep('Act IX - Delete employee from UI');
+    logStep('ASSERT X - Verify employee removal from UI results');
     await pimPage.searchEmployeeId(uniqueEmployeeId);
     await pimPage.clickSearch();
     await expect(pimPage.noRecordsFoundMessage.nth(1)).toBeVisible();
 
-    logStep('Assert IX - Confirm employee is removed from the UI search results');
-
-    // Verify deletion via API
-    const afterDeleteResp = await apiContext.get('https://opensource-demo.orangehrmlive.com/web/index.php/api/v2/pim/employees');
+    logStep('ACT XI - Validate deletion via API');
+    const afterDeleteResp = await apiContext.get(employeesUrl);
     expect(afterDeleteResp.status()).toBe(200);
     const afterBody = await afterDeleteResp.json();
     const deleted = afterBody.data.find((e: any) => e.employeeId === uniqueEmployeeId);
+
+    logStep('ASSERT XI - Confirm employee deletion in API');
     expect(deleted).toBeUndefined();
 
-    logStep('Assert IX - Confirm employee record is deleted in API');
-
-    // Logout
+    logStep('ACT XII - Logout from application');
     await loginPage.logout();
+
+    logStep('ASSERT XII - Verify successful logout');
+    await expect(page).toHaveURL(/login/);
   });
 });

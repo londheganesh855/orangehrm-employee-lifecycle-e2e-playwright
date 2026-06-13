@@ -151,10 +151,13 @@ export default class CustomHTMLReporter implements Reporter {
         name: attachment.name,
         body: Buffer.isBuffer(attachment.body)
           ? attachment.body.toString('utf-8')
-          : (attachment.body as string),
+          : String(attachment.body),
       }));
 
-    let browser = test.parent?.project()?.use?.browserName || 'unknown';
+    let browser =
+      test.parent?.project()?.use?.browserName ||
+      test.parent?.project()?.name ||
+      'unknown';
 
     // Playwright identifies Edge as Chromium internally, so we manually detect Edge
     if (test.parent?.project()?.name === 'edge') {
@@ -173,12 +176,16 @@ export default class CustomHTMLReporter implements Reporter {
         this.results[existingTestIndex].status = 'flaky';
       }
     } else {
+      const errorText = result.error
+        ? `${result.error.stack || result.error.message}`
+        : undefined;
+
       this.results.push({
         testName: test.title,
         status: isFlaky ? 'flaky' : result.status,
         steps: result.steps.map((step) => step.title),
         browser,
-        errorLogs: result.error?.message,
+        errorLogs: errorText,
         duration: result.duration,
         startTime: startTime.toLocaleString(),
         endTime: endTime.toLocaleString(),
@@ -621,11 +628,21 @@ ${result.errorLogs ? `\nError:\n\`\`\`\n${result.errorLogs}\n\`\`\`\n` : ''}
                         `
                             : ''
                         }
+                        ${
+                          (result.logs.stdout.length > 0 || result.logs.stderr.length > 0 || result.logs.console.length > 0)
+                            ? `
+                          <div class="log-section">
+                            <h4>Captured Logs</h4>
+                            ${result.logs.stdout.length > 0 ? `<div class="log-entry"><strong>stdout:</strong><br>${result.logs.stdout.join('<br>')}</div>` : ''}
+                            ${result.logs.stderr.length > 0 ? `<div class="log-entry"><strong>stderr:</strong><br>${result.logs.stderr.join('<br>')}</div>` : ''}
+                            ${result.logs.console.length > 0 ? `<div class="log-entry"><strong>console:</strong><br>${result.logs.console.join('<br>')}</div>` : ''}
+                          </div>
+                        `
+                            : ''
+                        }
                       </details>
                     </td>
-                    <td>${
-                      result.browser
-                    }</td> <!-- Added Browser Name Column -->
+                    <td>${result.browser}</td> <!-- Added Browser Name Column -->
                     <td class="status ${result.status}">${result.status}</td>
                     <td class="time-taken">${this.formatDuration(
                       result.duration
@@ -653,7 +670,9 @@ ${result.errorLogs ? `\nError:\n\`\`\`\n${result.errorLogs}\n\`\`\`\n` : ''}
                 `
               )
               .join('')}
-          </tbody>
+</tbody>
+        </table>
+      </body>
       </html>
     `;
 

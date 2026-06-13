@@ -25,7 +25,6 @@ export default defineConfig({
 
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
-    ['./html-reporter.ts'],
   ],
 
   use: {
@@ -34,7 +33,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
     video: 'on',
     screenshot: 'only-on-failure',
-    headless: true,
+    headless: false,
     viewport: null,
   },
 
