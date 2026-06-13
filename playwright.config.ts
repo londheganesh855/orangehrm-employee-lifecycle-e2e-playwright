@@ -34,7 +34,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
     video: 'on',
     screenshot: 'only-on-failure',
-    headless: false,
+    headless: true,
     viewport: null,
   },
 
