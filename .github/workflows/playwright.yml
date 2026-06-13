@@ -31,15 +31,29 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Debug environment (safe)
+      # 🔥 DEBUG ENV CHECK
+      - name: Debug environment variables
         run: |
+          echo "===== ENV DEBUG START ====="
           echo "BASE_URL=$BASE_URL"
           echo "LoginUsername=$LoginUsername"
           echo "LoginPassword is set: $([ -n \"$LoginPassword\" ] && echo YES || echo NO)"
+          echo "===== ENV DEBUG END ====="
 
-      - name: Run tests
-        run: npx playwright test
+      # 🔥 RUN TESTS WITH TRACE + DEBUG
+      - name: Run Playwright tests (DEBUG MODE)
+        run: npx playwright test --trace on --reporter=list
 
+      # 🔥 SAVE TRACE FILES (VERY IMPORTANT FOR 0.0s FAILURES)
+      - name: Upload Playwright trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-trace
+          path: test-results/
+          retention-days: 7
+
+      # 🔥 HTML REPORT
       - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4
