@@ -29,7 +29,7 @@ export default defineConfig({
   ],
 
   use: {
-    baseURL: process.env.BaseURL,
+    baseURL: process.env.BASE_URL,
 
     trace: 'retain-on-failure',
     video: 'on',
