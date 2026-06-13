@@ -6,9 +6,11 @@ import * as path from 'path';
 /**
  * Load environment variables
  */
-dotenv.config({
-  path: path.resolve(__dirname, '.env.playwright')
-});
+if (!process.env.CI) {
+  dotenv.config({
+    path: path.resolve(__dirname, '.env.playwright')
+  });
+}
 
 export default defineConfig({
   testDir: './tests',
