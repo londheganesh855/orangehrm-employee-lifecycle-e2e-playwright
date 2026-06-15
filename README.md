@@ -51,6 +51,57 @@ Do not commit credentials to source control.
 
 ---
 
+## Framework Architecture
+
+```text
+Orange_HRM_Playwright
+│
+├── Pages/
+│   ├── LoginPage.ts
+│   ├── PIMPage.ts
+│   ├── AddEmployeePage.ts
+│   └── EmployeeDetailsPage.ts
+│
+├── tests/
+│   ├── TC01_employee.create.spec.ts
+│   ├── TC02_employee.jobUpdate.spec.ts
+│   └── TC03_employee.delete.spec.ts
+│
+├── helper/
+│   └── LoginHelper.ts
+│
+├── testData/
+│   ├── employeeData.json
+│   └── jobDetails.json
+│
+├── Files/
+│   └── Test assets and uploads
+│
+├── test-results/
+│   ├── HTML Report
+│   ├── PDF Report
+│   ├── Videos
+│   ├── Screenshots
+│   └── Traces
+│
+├── playwright.config.ts
+├── html-reporter.ts
+└── README.md
+```
+
+### Design Overview
+
+The framework follows the Page Object Model (POM) design pattern to improve maintainability, readability, and reusability.
+
+* Page classes encapsulate UI interactions and locators.
+* Test scenarios are separated into Create, Update, and Delete flows for improved maintainability.
+* Test data is managed through JSON files to support data-driven testing.
+* Helper classes provide reusable business actions and common workflows.
+* API validation is integrated with UI automation to verify end-to-end data consistency.
+* HTML, PDF, screenshots, videos, and traces are automatically generated for reporting and debugging.
+
+---
+
 ## Execution
 
 Run the tests using the configured npm script:
@@ -74,7 +125,6 @@ npx cross-env NODE_OPTIONS=--require ts-node/register playwright test tests/Empl
 ---
 
 ## Reports and Artifacts
-
 - Built-in Playwright report: `playwright-report/`
 - Custom HTML report: `test-results/orangehrm-automation-test-report.html`
 - PDF report: `test-results/OrangeHRM Automation Test Report.pdf`
@@ -99,6 +149,7 @@ The repository includes a GitHub Actions workflow at `.github/workflows/playwrig
 
 ## Notes
 
-- Keep credentials out of version control.
-- Verify the `.env.playwright` file is present before executing tests.
-- Use the custom report for branded output and the Playwright report for built-in diagnostics.
+* Keep credentials out of version control.
+* Verify the `.env.playwright` file is present before executing tests.
+* Use the custom report for branded output and the Playwright report for built-in diagnostics.
+* Follow the Create → Update → Delete employee lifecycle workflow when executing the test suite.
