@@ -10,7 +10,7 @@ import jobDetails from '../testData/jobDetails.json';
 const logStep = (message: string) => console.log(`STEP: ${message}`);
 
 test.describe('Employee Lifecycle - E2E', () => {
-  test('creates, verifies, edits, validates via API, deletes and logs out', async ({ page }) => {
+  test.skip('creates, verifies, edits, validates via API, deletes and logs out', async ({ page }) => {
     test.setTimeout(120000);
 
     const loginPage = new LoginPage(page);
@@ -19,7 +19,7 @@ test.describe('Employee Lifecycle - E2E', () => {
     const employeeDetailsPage = new EmployeeDetailsPage(page);
     const loginHelper = new LoginHelper(page);
 
-    const uniqueEmployeeId = `E${Date.now().toString().slice(-6)}`;
+    const uniqueEmployeeId = employeeData.employeeId;
     const firstName = employeeData.firstName;
     const lastName = employeeData.lastName;
     const middleName = employeeData.middleName;

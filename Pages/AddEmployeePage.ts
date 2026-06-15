@@ -21,8 +21,7 @@ export class AddEmployeePage {
         );
         this.saveButton = page.getByRole('button', { name: ' Save ' });
         this.successToastMessage = page.locator(
-            '//div[@class="oxd-toast-content oxd-toast-content--success"]//p'
-        );
+            "//div[contains(@class,'oxd-toast-content') and contains(., 'Success')]");
         this.employeeExistsMessage = page.locator(
             '//span[text()="Employee Id already exists"]'
         );
