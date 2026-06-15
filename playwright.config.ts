@@ -25,6 +25,7 @@ export default defineConfig({
 
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
+    ['./html-reporter.ts', { outputFolder: 'test-results', generatePDF: true }],
   ],
 
   use: {

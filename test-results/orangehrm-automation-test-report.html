@@ -1,0 +1,566 @@
+
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>OrangeHRM Automation Test Report</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+          }
+          h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+          }
+          .bdd-step {
+            font-family: monospace;
+            margin: 8px 0;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #28a745;
+          }
+          .summary {
+            display: flex;
+            justify-content: space-around;
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            cursor: pointer;
+          }
+          .summary div { font-weight: bold; }
+          .search-bar {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          input[type="text"] {
+            width: 50%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+          }
+          th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+          }
+          th { background-color: #28a745; color: white; cursor: pointer; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          .passed { color: #28a745; font-weight: bold; }
+          .failed { color: #dc3545; font-weight: bold; }
+          .skipped { color: #6c757d; font-weight: bold; }
+          .flaky { color: #ffc107; font-weight: bold; }
+          .steps-box {
+            background-color: #f1f1f1;
+            padding: 10px;
+            margin-top: 10px;
+            border-left: 3px solid #007bff;
+          }
+          .attachments a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+          }
+        .log-section {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+          }
+
+          .log-entry {
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin: 4px 0;
+            padding: 4px 8px;
+            background: #fff;
+            border-left: 3px solid #28a745;
+          }
+
+          details summary {
+            cursor: pointer;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+          }
+
+          .copy-button {
+            float: right;
+            padding: 2px 6px;
+            background: #eee;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+          }
+        </style>
+        <script>
+          function searchTests() {
+            const input = document.getElementById('search').value.toLowerCase();
+            document.querySelectorAll('tbody tr').forEach((row) => {
+              const match = Array.from(row.cells).some((cell) => cell.textContent.toLowerCase().includes(input));
+              row.style.display = match ? '' : 'none';
+            });
+          }
+
+          function filterStatus(status) {
+            document.querySelectorAll('tbody tr').forEach((row) => {
+              const statusCell = row.querySelector('.status');
+              row.style.display = (status === 'all' || statusCell.textContent.trim() === status) ? '' : 'none';
+            });
+          }
+
+          function showAll() {
+            document.querySelectorAll('tbody tr').forEach((row) => (row.style.display = ''));
+          }
+
+          let sortDirection = 1;
+
+          function sortByTime() {
+            const tbody = document.querySelector('tbody');
+            if (!tbody) return;
+
+            const rows = Array.from(document.querySelectorAll('tbody tr'));
+            if (!rows.length) return;
+
+            rows.sort((a, b) => {
+              const timeA = a.querySelector('.time-taken')?.textContent ?? '0s';
+              const timeB = b.querySelector('.time-taken')?.textContent ?? '0s';
+              return (parseDuration(timeA) - parseDuration(timeB)) * sortDirection;
+            });
+
+            tbody.innerHTML = '';
+            rows.forEach((row) => tbody.appendChild(row));
+            sortDirection *= -1;
+          }
+
+          function parseDuration(duration) {
+            const match = duration.match(/([0-9]+)m[ ]([0-9.]+)s|([0-9.]+)s/);
+            
+            if (match) {
+              if (match[1] && match[2]) {
+                return parseInt(match[1], 10) * 60 + parseFloat(match[2]);
+              } else if (match[3]) {
+                return parseFloat(match[3]);
+              }
+            }
+            return 0;
+          }
+            function prepareForPrint() {
+              document.querySelectorAll('details').forEach(detail => {
+                detail.setAttribute('open', '');
+              });
+
+              document.querySelectorAll('tbody tr').forEach(row => {
+                row.style.display = '';
+              });
+
+              document.querySelectorAll('.copy-button').forEach(button => {
+                button.style.display = 'none';
+              });
+
+              window.print();
+            }
+        </script>
+      </head>
+      <body>
+        <h1>OrangeHRM Automation Test Results Summary</h1>
+        <!-- Print/Save as PDF Button -->
+        <button onclick="prepareForPrint()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        Print/Save as PDF
+        </button>
+        <div class="summary">
+          <div onclick="filterStatus('all')">All: 4</div>
+          <div onclick="filterStatus('passed')">Passed: 3</div>
+          <div onclick="filterStatus('failed')">Failed: 0</div>
+          <div onclick="filterStatus('skipped')">Skipped: 1</div>
+          <div onclick="filterStatus('flaky')">Flaky: 0</div>
+          <div>Pass Rate: 75.00%</div>
+          <div>Fail Rate: 0.00%</div>
+          <div>Total Time: 1.43 min</div>
+          <div class="timestamp">Timestamp: 15/6/2026, 4:03:04 pm</div>
+          <div onclick="showAll()">Show All</div>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="search" placeholder="Search by any field..." onkeyup="searchTests()">
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Test Name</th>
+              <th>Browser</th>
+              <th>Status</th>
+              <th onclick="sortByTime()">Time Taken &#x2195;</th>
+              <th>Start Time</th>
+              <th>End Time</th>
+              <th>Attachments</th>
+            </tr>
+          </thead>
+          <tbody> 
+            
+                  <tr>
+                    <td>1</td>
+                    <td>
+                      <details>
+                        <summary>creates, verifies, edits, validates via API, deletes and logs out</summary>
+                      
+                        <!-- BDD Test Steps -->
+                        <div class="log-section">
+                          <h4>Test Steps</h4>
+                          
+                        </div>
+
+                        <!-- Error Logs -->
+                        
+                        
+                          <div class="log-section">
+                            <h4>Captured Logs</h4>
+                            <div class="log-entry"><strong>stdout:</strong><br>◇ injected env (0) from .env.playwright // tip: ⌘ enable debugging { debug: true }
+</div>
+                            
+                            
+                          </div>
+                        
+                      </details>
+                    </td>
+                    <td>chromium</td> <!-- Added Browser Name Column -->
+                    <td class="status skipped">skipped</td>
+                    <td class="time-taken">0.0s</td>
+                    <td>15/6/2026, 4:01:34 pm</td>
+                    <td>15/6/2026, 4:01:34 pm</td>
+                    <td class="attachments">
+                      
+                      
+                      
+                    </td>
+                  </tr>
+                
+                  <tr>
+                    <td>2</td>
+                    <td>
+                      <details>
+                        <summary>creates employee from test data and assigns initial job details</summary>
+                      
+                        <!-- BDD Test Steps -->
+                        <div class="log-section">
+                          <h4>Test Steps</h4>
+                          
+                                <div class="bdd-step">Before Hooks</div>
+                              
+                                <div class="bdd-step">Navigate to "/"</div>
+                              
+                                <div class="bdd-step">Fill "Admin" getByPlaceholder('Username')</div>
+                              
+                                <div class="bdd-step">Fill "admin123" getByPlaceholder('Password')</div>
+                              
+                                <div class="bdd-step">Click getByRole('button', { name: 'Login' })</div>
+                              
+                                <div class="bdd-step">Expect "toHaveURL"</div>
+                              
+                                <div class="bdd-step">Create request context</div>
+                              
+                                <div class="bdd-step">Expect "toBeDefined"</div>
+                              
+                                <div class="bdd-step">GET "/web/index.php/api/v2/pim/employees"</div>
+                              
+                                <div class="bdd-step">Click locator('//span[text()=\'PIM\']')</div>
+                              
+                                <div class="bdd-step">Click getByRole('button', { name: '  Add  ' })</div>
+                              
+                                <div class="bdd-step">Set input files locator('//input[@class="oxd-file-input"]')</div>
+                              
+                                <div class="bdd-step">Fill "John" getByPlaceholder('First Name')</div>
+                              
+                                <div class="bdd-step">Fill "Harnett" getByPlaceholder('Middle Name')</div>
+                              
+                                <div class="bdd-step">Fill "Doe" getByPlaceholder('Last Name')</div>
+                              
+                                <div class="bdd-step">Fill "E0630" locator('//label[text()=\'Employee Id\']/../following-sibling::div//input')</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Click getByRole('button', { name: ' Save ' })</div>
+                              
+                                <div class="bdd-step">Expect "toBeVisible" locator('//div[contains(@class,\'oxd-toast-content\') and contains(., \'Success\')]').first()</div>
+                              
+                                <div class="bdd-step">Expect "toContain"</div>
+                              
+                                <div class="bdd-step">Click getByText('Job')</div>
+                              
+                                <div class="bdd-step">Click locator('//label[text()=\'Job Title\']/../following-sibling::div')</div>
+                              
+                                <div class="bdd-step">Click getByRole('option', { name: 'Account Assistant' })</div>
+                              
+                                <div class="bdd-step">Click locator('//label[text()=\'Employment Status\']/../following-sibling::div')</div>
+                              
+                                <div class="bdd-step">Click getByRole('option', { name: 'Freelance' })</div>
+                              
+                                <div class="bdd-step">Click getByRole('button', { name: ' Save ' })</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">After Hooks</div>
+                              
+                        </div>
+
+                        <!-- Error Logs -->
+                        
+                        
+                          <div class="log-section">
+                            <h4>Captured Logs</h4>
+                            <div class="log-entry"><strong>stdout:</strong><br>STEP: ACT I - Open application and perform login
+<br>STEP: ASSERT I - Verify successful login (Dashboard URL validation)
+<br>STEP: ACT II - Initialize authenticated API context using session cookies
+<br>STEP: ACT III - Clean up any duplicate test employee before creation
+<br>STEP: ACT IV - Navigate to Add Employee and enter employee details
+<br>STEP: ASSERT IV - Validate employee form data is correctly populated
+<br>STEP: ACT V - Save newly created employee
+<br>STEP: ASSERT V - Verify employee creation success message
+<br>STEP: ACT VI - Assign initial job details to employee
+<br>STEP: ASSERT VI - Validate initial job details saved successfully
+</div>
+                            
+                            
+                          </div>
+                        
+                      </details>
+                    </td>
+                    <td>chromium</td> <!-- Added Browser Name Column -->
+                    <td class="status passed">passed</td>
+                    <td class="time-taken">51.8s</td>
+                    <td>15/6/2026, 4:01:35 pm</td>
+                    <td>15/6/2026, 4:02:29 pm</td>
+                    <td class="attachments">
+                      
+                      <a href="./assets/videos/video.webm" target="_blank">Video</a>
+                      
+                    </td>
+                  </tr>
+                
+                  <tr>
+                    <td>3</td>
+                    <td>
+                      <details>
+                        <summary>updates the employee job details and verifies UI and API consistency</summary>
+                      
+                        <!-- BDD Test Steps -->
+                        <div class="log-section">
+                          <h4>Test Steps</h4>
+                          
+                                <div class="bdd-step">Before Hooks</div>
+                              
+                                <div class="bdd-step">Navigate to "/"</div>
+                              
+                                <div class="bdd-step">Fill "Admin" getByPlaceholder('Username')</div>
+                              
+                                <div class="bdd-step">Fill "admin123" getByPlaceholder('Password')</div>
+                              
+                                <div class="bdd-step">Click getByRole('button', { name: 'Login' })</div>
+                              
+                                <div class="bdd-step">Expect "toHaveURL"</div>
+                              
+                                <div class="bdd-step">Create request context</div>
+                              
+                                <div class="bdd-step">Expect "toBeDefined"</div>
+                              
+                                <div class="bdd-step">Click locator('//span[text()=\'PIM\']')</div>
+                              
+                                <div class="bdd-step">Fill "E0630" locator('//label[text()=\'Employee Id\']/../following-sibling::div//input')</div>
+                              
+                                <div class="bdd-step">Click getByRole('button', { name: '  Search  ' })</div>
+                              
+                                <div class="bdd-step">Click locator('//div[text()=\'E0630\']/ancestor::div[contains(@class,\'oxd-table-row\')]//i[contains(@class,\'bi-pencil-fill\')]')</div>
+                              
+                                <div class="bdd-step">Click getByText('Job')</div>
+                              
+                                <div class="bdd-step">Click locator('//label[text()=\'Job Title\']/../following-sibling::div')</div>
+                              
+                                <div class="bdd-step">Click getByRole('option', { name: 'Automaton Tester' })</div>
+                              
+                                <div class="bdd-step">Click locator('//label[text()=\'Employment Status\']/../following-sibling::div')</div>
+                              
+                                <div class="bdd-step">Click getByRole('option', { name: 'Full-Time Permanent' })</div>
+                              
+                                <div class="bdd-step">Click getByRole('button', { name: ' Save ' })</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">GET "/web/index.php/api/v2/pim/employees"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Expect "toBeDefined"</div>
+                              
+                                <div class="bdd-step">GET "/web/index.php/api/v2/pim/employees/262/job-details"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">After Hooks</div>
+                              
+                        </div>
+
+                        <!-- Error Logs -->
+                        
+                        
+                          <div class="log-section">
+                            <h4>Captured Logs</h4>
+                            <div class="log-entry"><strong>stdout:</strong><br>STEP: ACT I - Open application and perform login
+<br>STEP: ASSERT I - Verify successful login (Dashboard URL validation)
+<br>STEP: ACT II - Initialize authenticated API context using session cookies
+<br>STEP: ACT III - Search and open the employee record for update
+<br>STEP: ACT IV - Update employee job details
+<br>STEP: ASSERT IV - Verify updated job details in UI
+<br>STEP: ACT V - Validate employee data using API
+<br>STEP: ASSERT V - Verify API data matches UI updated values
+</div>
+                            
+                            
+                          </div>
+                        
+                      </details>
+                    </td>
+                    <td>chromium</td> <!-- Added Browser Name Column -->
+                    <td class="status passed">passed</td>
+                    <td class="time-taken">22.2s</td>
+                    <td>15/6/2026, 4:02:29 pm</td>
+                    <td>15/6/2026, 4:02:52 pm</td>
+                    <td class="attachments">
+                      
+                      <a href="./assets/videos/video.webm" target="_blank">Video</a>
+                      
+                    </td>
+                  </tr>
+                
+                  <tr>
+                    <td>4</td>
+                    <td>
+                      <details>
+                        <summary>deletes the test employee and validates the result in UI and API</summary>
+                      
+                        <!-- BDD Test Steps -->
+                        <div class="log-section">
+                          <h4>Test Steps</h4>
+                          
+                                <div class="bdd-step">Before Hooks</div>
+                              
+                                <div class="bdd-step">Navigate to "/"</div>
+                              
+                                <div class="bdd-step">Fill "Admin" getByPlaceholder('Username')</div>
+                              
+                                <div class="bdd-step">Fill "admin123" getByPlaceholder('Password')</div>
+                              
+                                <div class="bdd-step">Click getByRole('button', { name: 'Login' })</div>
+                              
+                                <div class="bdd-step">Expect "toHaveURL"</div>
+                              
+                                <div class="bdd-step">Create request context</div>
+                              
+                                <div class="bdd-step">Expect "toBeDefined"</div>
+                              
+                                <div class="bdd-step">Click locator('//span[text()=\'PIM\']')</div>
+                              
+                                <div class="bdd-step">Fill "E0630" locator('//label[text()=\'Employee Id\']/../following-sibling::div//input')</div>
+                              
+                                <div class="bdd-step">Click getByRole('button', { name: '  Search  ' })</div>
+                              
+                                <div class="bdd-step">Click locator('//div[text()=\'E0630\']/ancestor::div[contains(@class,\'oxd-table-row\')]//i[contains(@class,\'icon bi-trash\')]')</div>
+                              
+                                <div class="bdd-step">Click getByRole('button', { name: '  Yes, Delete  ' })</div>
+                              
+                                <div class="bdd-step">Fill "E0630" locator('//label[text()=\'Employee Id\']/../following-sibling::div//input')</div>
+                              
+                                <div class="bdd-step">Click getByRole('button', { name: '  Search  ' })</div>
+                              
+                                <div class="bdd-step">Expect "toBeVisible" locator('//div[@class=\'oxd-toast-content oxd-toast-content--info\']//p').nth(1)</div>
+                              
+                                <div class="bdd-step">GET "/web/index.php/api/v2/pim/employees"</div>
+                              
+                                <div class="bdd-step">Expect "toBe"</div>
+                              
+                                <div class="bdd-step">Expect "toBeUndefined"</div>
+                              
+                                <div class="bdd-step">Click locator('//p[@class=\'oxd-userdropdown-name\']')</div>
+                              
+                                <div class="bdd-step">Click locator('//a[text()=\'Logout\']')</div>
+                              
+                                <div class="bdd-step">Expect "toHaveURL"</div>
+                              
+                                <div class="bdd-step">After Hooks</div>
+                              
+                        </div>
+
+                        <!-- Error Logs -->
+                        
+                        
+                          <div class="log-section">
+                            <h4>Captured Logs</h4>
+                            <div class="log-entry"><strong>stdout:</strong><br>STEP: ACT I - Open application and perform login
+<br>STEP: ASSERT I - Verify successful login (Dashboard URL validation)
+<br>STEP: ACT II - Initialize authenticated API context using session cookies
+<br>STEP: ACT III - Delete employee via UI
+<br>STEP: ASSERT III - Verify employee removal from UI results
+<br>STEP: ACT IV - Validate deletion via API
+<br>STEP: ASSERT IV - Confirm employee deletion in API
+<br>STEP: ACT V - Logout from application
+<br>STEP: ASSERT V - Verify successful logout (Login URL validation)
+</div>
+                            
+                            
+                          </div>
+                        
+                      </details>
+                    </td>
+                    <td>chromium</td> <!-- Added Browser Name Column -->
+                    <td class="status passed">passed</td>
+                    <td class="time-taken">11.7s</td>
+                    <td>15/6/2026, 4:02:52 pm</td>
+                    <td>15/6/2026, 4:03:03 pm</td>
+                    <td class="attachments">
+                      
+                      <a href="./assets/videos/video.webm" target="_blank">Video</a>
+                      
+                    </td>
+                  </tr>
+                
+</tbody>
+        </table>
+      </body>
+      </html>
+    

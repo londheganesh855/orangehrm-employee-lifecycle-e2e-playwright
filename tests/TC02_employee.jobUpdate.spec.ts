@@ -29,14 +29,13 @@ test.describe('Employee job update and validation', () => {
     const apiContext = await createAuthenticatedApiContext(page);
     expect(apiContext).toBeDefined();
 
-
-    logStep('ACT VI - Search and open the employee record for update');
+    logStep('ACT III - Search and open the employee record for update');
     await pimPage.clickPIM();
     await pimPage.searchEmployeeId(uniqueEmployeeId);
     await pimPage.clickSearch();
     await pimPage.clickEditEmployee(uniqueEmployeeId);
 
-    logStep('ACT VII - Update employee job details');
+    logStep('ACT IV - Update employee job details');
     await employeeDetailsPage.clickJobTab();
     await employeeDetailsPage.clickJobTitleDropdown();
     await employeeDetailsPage.selectJobTitle(jobDetails.updatedEmployment.updatedJobTitle);
@@ -44,11 +43,11 @@ test.describe('Employee job update and validation', () => {
     await employeeDetailsPage.selectEmploymentStatus(jobDetails.updatedEmployment.updatedEmpStatus);
     await employeeDetailsPage.clickSave();
 
-    logStep('ASSERT VII - Verify updated job details in UI');
+    logStep('ASSERT IV - Verify updated job details in UI');
     await expect(await employeeDetailsPage.getSelectedJobTitle()).toBe(jobDetails.updatedEmployment.updatedJobTitle);
     await expect(await employeeDetailsPage.getSelectedEmploymentStatus()).toBe(jobDetails.updatedEmployment.updatedEmpStatus);
 
-    logStep('ACT VIII - Validate employee data using API');
+    logStep('ACT V - Validate employee data using API');
     const employeesResp = await apiContext.get(EMPLOYEES_API);
     expect(employeesResp.status()).toBe(200);
     const employeesBody = await employeesResp.json();
@@ -61,7 +60,7 @@ test.describe('Employee job update and validation', () => {
     expect(jobResp.status()).toBe(200);
     const jobBody = await jobResp.json();
 
-    logStep('ASSERT VIII - Verify API data matches UI updated values');
+    logStep('ASSERT V - Verify API data matches UI updated values');
     expect(found.firstName).toBe(firstName);
     expect(found.lastName).toBe(lastName);
     expect(found.middleName).toBe(middleName);

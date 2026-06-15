@@ -26,29 +26,31 @@ test.describe('Employee deletion', () => {
     const apiContext = await createAuthenticatedApiContext(page);
     expect(apiContext).toBeDefined();
 
-    logStep('ACT V - Delete employee via UI');
+    logStep('ACT III - Delete employee via UI');
     await pimPage.clickPIM();
     await pimPage.searchEmployeeId(uniqueEmployeeId);
     await pimPage.clickSearch();
     await pimPage.clickDeleteEmployee(uniqueEmployeeId);
     await pimPage.clickYesDelete();
 
-    logStep('ASSERT V - Verify employee removal from UI results');
+    logStep('ASSERT III - Verify employee removal from UI results');
     await pimPage.searchEmployeeId(uniqueEmployeeId);
     await pimPage.clickSearch();
     await expect(pimPage.noRecordsFoundMessage.nth(1)).toBeVisible({timeout: 5000});
 
-    logStep('ACT VI - Validate deletion via API');
+    logStep('ACT IV - Validate deletion via API');
     const afterDeleteResp = await apiContext.get(EMPLOYEES_API);
     expect(afterDeleteResp.status()).toBe(200);
     const afterBody = await afterDeleteResp.json();
     const deleted = afterBody.data.find((e: any) => e.employeeId === uniqueEmployeeId);
 
-    logStep('ASSERT VI - Confirm employee deletion in API');
+    logStep('ASSERT IV - Confirm employee deletion in API');
     expect(deleted).toBeUndefined();
 
-    logStep('ACT VII - Logout from application');
+    logStep('ACT V - Logout from application');
     await loginPage.logout();
+    
+    logStep('ASSERT V - Verify successful logout (Login URL validation)');
     await expect(page).toHaveURL(/login/);
   });
 });

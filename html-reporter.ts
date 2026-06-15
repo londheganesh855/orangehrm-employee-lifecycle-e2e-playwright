@@ -702,6 +702,14 @@ ${result.errorLogs ? `\nError:\n\`\`\`\n${result.errorLogs}\n\`\`\`\n` : ''}
       console.error('Error generating Markdown report:', error);
     }
 
+    // Generate PDF report from HTML
+    try {
+      await this.generatePDFReport();
+      console.log(`PDF report generated at ${path.join(process.cwd(), 'test-results', 'OrangeHRM Automation Test Report.pdf')}`);
+    } catch (error) {
+      console.warn('Note: PDF report generation requires display server or headless Chromium. Skipping PDF generation.');
+    }
+
     console.log(`HTML report generated at ${outputPath}`);
     console.log(`Test Suite Completed At: ${endTimeStamp}`);
     // Print summary to terminal
